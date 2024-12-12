@@ -1,0 +1,47 @@
+//@version=5
+indicator("Green Candle Groups", overlay=true)
+
+// Input for color customization
+colorGroup = input.color(color.new(color.green, 50), "Color for Green Candle Group")
+colorSpecialRed = input.color(color.new(color.red, 50), "Color for Special Red Candle")
+
+// Variables to track consecutive green candles
+isGreen = close > open
+isRed = close < open
+countGreen = 0
+var int groupCounter = 0
+var int startIndex = na
+var string currentGroup = na
+var bool singleRed = false
+var bool previousRed = false
+
+// Track green candle groups
+if isGreen
+    previousRed := false
+    // Start a new green group if transitioning from a non-green candle
+    if na(startIndex) or not isGreen[1]
+        startIndex := bar_index
+        groupCounter += 1
+        currentGroup := "group" + str.tostring(groupCounter)
+    countGreen := countGreen + 1
+    label.new(bar_index, high + 2 * (high - low), currentGroup, style=label.style_label_down, color=color.new(colorGroup, 0), textcolor=color.black)
+
+    // Check if the previous red candle was single
+    if singleRed
+        label.new(bar_index[1], high[1] + 2 * (high[1] - low[1]), "special red candle", style=label.style_label_up, color=color.new(colorSpecialRed, 0), textcolor=color.white)
+        singleRed := false
+
+else if isRed
+    // First red candle sets singleRed to true
+    if not singleRed and not previousRed
+        singleRed := true
+    else
+        // If another red candle follows, it's not single
+        singleRed := false
+        previousRed := true
+
+else
+    // Reset green group tracking when not green
+    startIndex := na
+    countGreen := 0
+
